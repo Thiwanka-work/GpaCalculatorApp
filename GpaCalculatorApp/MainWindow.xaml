@@ -1,0 +1,326 @@
+<Window x:Class="GpaCalculatorApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Smart GPA Assistant" Height="720" Width="1120"
+        WindowStartupLocation="CenterScreen" Background="#0d1117"
+        FontFamily="Segoe UI">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ═══════════════ SIDEBAR ═══════════════ -->
+        <Border Grid.Column="0" Background="#161b22" BorderBrush="#30363d" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Logo -->
+                <StackPanel Grid.Row="0" Margin="20,30,20,30">
+                    <TextBlock Text="🎓" FontSize="40" HorizontalAlignment="Center"/>
+                    <TextBlock Text="GPA Assistant" FontSize="22" FontWeight="Bold"
+                               Foreground="#f0f6fc" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                    <TextBlock Text="Smart Academic Advisor" FontSize="12"
+                               Foreground="#8b949e" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    <Border Height="1" Background="#30363d" Margin="0,20,0,0"/>
+                </StackPanel>
+
+                <!-- Nav -->
+                <StackPanel Grid.Row="1" Margin="12,0">
+                    <Button x:Name="NavGpaBtn" Content="📊  GPA Calculator"
+                            Style="{StaticResource NavButton}" Click="NavGpa_Click"/>
+                    <Button x:Name="NavCgpaBtn" Content="📈  CGPA Calculator"
+                            Style="{StaticResource NavButton}" Click="NavCgpa_Click"/>
+                    <Button x:Name="NavTargetBtn" Content="🎯  Target Analytics"
+                            Style="{StaticResource NavButton}" Click="NavTarget_Click"/>
+                    <Button x:Name="NavAdvisorBtn" Content="💡  Agent Advisor"
+                            Style="{StaticResource NavButton}" Click="NavAdvisor_Click"/>
+                </StackPanel>
+
+                <!-- Footer / Controls -->
+                <StackPanel Grid.Row="2" Margin="12,0,12,20">
+                    <CheckBox x:Name="OnlineModeToggle" Content="🌐 Online Mode" Foreground="#8b949e" Margin="8,0,0,10" Click="OnlineMode_Click"/>
+                    <Button x:Name="LoginBtn" Content="🔑  Login / Register" Style="{StaticResource SecondaryButton}" Click="ShowLogin_Click"/>
+                    <TextBlock x:Name="UserStatusText" Text="Offline / Local Mode" FontSize="11" Foreground="#484f58" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════ CONTENT AREA ═══════════════ -->
+        <Grid Grid.Column="1">
+
+            <!-- ════ PAGE 1: GPA CALCULATOR ════ -->
+            <Grid x:Name="GpaPage" Visibility="Visible" Margin="30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                    <TextBlock Text="📊 GPA Calculator" FontSize="26" FontWeight="Bold" Foreground="#f0f6fc"/>
+                    <TextBlock Text="Add your subjects and calculate semester GPA" FontSize="14" Foreground="#8b949e" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Subject List -->
+                <Border Grid.Row="1" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Column Headers -->
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Subject Name" Foreground="#8b949e" FontSize="12" FontWeight="SemiBold" Margin="4,0,0,0"/>
+                            <TextBlock Grid.Column="1" Text="Credits" Foreground="#8b949e" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                            <TextBlock Grid.Column="2" Text="Grade" Foreground="#8b949e" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <!-- Dynamic Rows -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="GpaSubjectsPanel"/>
+                        </ScrollViewer>
+
+                        <!-- Add Button -->
+                        <Button Grid.Row="2" Content="＋  Add Subject" Style="{StaticResource SecondaryButton}"
+                                HorizontalAlignment="Left" Margin="0,12,0,0" Click="AddSubject_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Result Area -->
+                <Grid Grid.Row="2" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="Calculate GPA" Style="{StaticResource PrimaryButton}" Click="CalculateGpa_Click"/>
+                    <Border Grid.Column="1" x:Name="GpaResultBorder" Background="#161b22" CornerRadius="10"
+                            BorderBrush="#30363d" BorderThickness="1" Margin="16,0,0,0" Padding="20,10" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Your GPA: " Foreground="#8b949e" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="GpaResultText" Text="" FontSize="24" FontWeight="Bold" Foreground="#7c3aed" VerticalAlignment="Center"/>
+                            <TextBlock Text="  •  " Foreground="#30363d" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="GpaClassText" Text="" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- ════ PAGE 2: CGPA CALCULATOR ════ -->
+            <Grid x:Name="CgpaPage" Visibility="Collapsed" Margin="30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                    <TextBlock Text="📈 CGPA Calculator" FontSize="26" FontWeight="Bold" Foreground="#f0f6fc"/>
+                    <TextBlock Text="Add your semesters to calculate cumulative GPA" FontSize="14" Foreground="#8b949e" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <Border Grid.Row="1" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Semester" Foreground="#8b949e" FontSize="12" FontWeight="SemiBold" Margin="4,0,0,0"/>
+                            <TextBlock Grid.Column="1" Text="GPA" Foreground="#8b949e" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                            <TextBlock Grid.Column="2" Text="Credits" Foreground="#8b949e" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="CgpaSemestersPanel"/>
+                        </ScrollViewer>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="＋  Add Semester" Style="{StaticResource SecondaryButton}" Click="AddSemester_Click"/>
+                            <Button x:Name="SaveSemestersBtn" Content="💾  Save to Cloud" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Click="SaveSemesters_Click" Visibility="Collapsed"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="2" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="Calculate CGPA" Style="{StaticResource PrimaryButton}" Click="CalculateCgpa_Click"/>
+                    <Border Grid.Column="1" x:Name="CgpaResultBorder" Background="#161b22" CornerRadius="10"
+                            BorderBrush="#30363d" BorderThickness="1" Margin="16,0,0,0" Padding="20,10" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Your CGPA: " Foreground="#8b949e" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CgpaResultText" Text="" FontSize="24" FontWeight="Bold" Foreground="#7c3aed" VerticalAlignment="Center"/>
+                            <TextBlock Text="  •  " Foreground="#30363d" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="CgpaClassText" Text="" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- ════ PAGE 3: TARGET GPA PLANNER ════ -->
+            <Grid x:Name="TargetPage" Visibility="Collapsed" Margin="30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                    <TextBlock Text="🎯 Advanced Target Analytics" FontSize="26" FontWeight="Bold" Foreground="#f0f6fc"/>
+                    <TextBlock Text="Predict required GPA based on your current semesters" FontSize="14" Foreground="#8b949e" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <Border Grid.Row="1" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1"
+                        Padding="30" VerticalAlignment="Top">
+                    <StackPanel MaxWidth="500" HorizontalAlignment="Left">
+                        <Button Content="🔄 Load Semesters from CGPA Calculator" Style="{StaticResource SecondaryButton}"
+                                HorizontalAlignment="Left" Margin="0,0,0,20" Click="LoadTargetFromCgpa_Click"/>
+                        
+                        <!-- Current CGPA -->
+                        <TextBlock Text="Current CGPA" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                        <TextBox x:Name="TargetCurrentCgpa" Margin="0,0,0,16"/>
+
+                        <!-- Credits Completed -->
+                        <TextBlock Text="Total Credits Completed" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                        <TextBox x:Name="TargetCreditsCompleted" Margin="0,0,0,16"/>
+
+                        <!-- Target Class -->
+                        <TextBlock Text="Target Class" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                        <ComboBox x:Name="TargetClassCombo" Margin="0,0,0,16" SelectedIndex="0">
+                            <ComboBoxItem Content="First Class (3.70)"/>
+                            <ComboBoxItem Content="Second Upper (3.30)"/>
+                            <ComboBoxItem Content="Second Lower (3.00)"/>
+                        </ComboBox>
+
+                        <!-- Remaining Credits -->
+                        <TextBlock Text="Remaining Credits" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                        <TextBox x:Name="TargetRemainingCredits" Margin="0,0,0,24"/>
+
+                        <!-- Calculate -->
+                        <Button Content="Calculate Required GPA" Style="{StaticResource PrimaryButton}"
+                                HorizontalAlignment="Left" Click="CalculateTarget_Click"/>
+
+                        <!-- Result -->
+                        <Border x:Name="TargetResultBorder" Background="#0d1117" CornerRadius="10"
+                                BorderBrush="#30363d" BorderThickness="1" Margin="0,20,0,0" Padding="20" Visibility="Collapsed">
+                            <StackPanel>
+                                <TextBlock x:Name="TargetResultTitle" Text="" FontSize="18" FontWeight="Bold" Foreground="#f0f6fc"/>
+                                <TextBlock x:Name="TargetResultText" Text="" FontSize="14" Foreground="#8b949e" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ════ PAGE 4: ACADEMIC ADVISOR (AGENT SCREEN) ════ -->
+            <Grid x:Name="AdvisorPage" Visibility="Collapsed" Margin="30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                    <TextBlock Text="💡 AI Academic Advisor" FontSize="26" FontWeight="Bold" Foreground="#f0f6fc"/>
+                    <TextBlock Text="Get smart insights and an action plan to improve your grades" FontSize="14" Foreground="#8b949e" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Left: Input & Advice -->
+                    <Border Grid.Column="0" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="30" Margin="0,0,20,0">
+                        <StackPanel>
+                            <TextBlock Text="Enter Your Current GPA" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="AdvisorGpaInput" Grid.Column="0"/>
+                                <Button Grid.Column="1" Content="Analyze Performance" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0" Click="GetAdvice_Click"/>
+                            </Grid>
+
+                            <!-- Advice Cards -->
+                            <ScrollViewer Margin="0,24,0,0" VerticalScrollBarVisibility="Auto" MaxHeight="400">
+                                <StackPanel x:Name="AdvicePanel"/>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Right: Premium Visuals -->
+                    <Border Grid.Column="1" Background="#0d1117" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Performance Overview" FontSize="18" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,20"/>
+                            
+                            <TextBlock Text="Distance to Next Tier" Foreground="#8b949e" FontSize="13" Margin="0,0,0,8"/>
+                            <ProgressBar x:Name="NextTierProgress" Height="10" Minimum="0" Maximum="4.0" Value="0" 
+                                         Foreground="#3fb950" Background="#21262d" BorderThickness="0" Margin="0,0,0,8"/>
+                            <Grid>
+                                <TextBlock x:Name="CurrentTierLabel" Text="Current: --" Foreground="#8b949e" FontSize="12" HorizontalAlignment="Left"/>
+                                <TextBlock x:Name="NextTierLabel" Text="Next: --" Foreground="#8b949e" FontSize="12" HorizontalAlignment="Right"/>
+                            </Grid>
+                            
+                            <Border Background="#161b22" CornerRadius="8" Padding="15" Margin="0,30,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Target Plan" FontSize="14" FontWeight="SemiBold" Foreground="#c9d1d9"/>
+                                    <TextBlock x:Name="AdvisorTargetInfo" Text="Run an analysis to see your next achievable target class." 
+                                               Foreground="#8b949e" FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- ════ PAGE 5: LOGIN / REGISTER ════ -->
+            <Grid x:Name="LoginPage" Visibility="Collapsed" Margin="30">
+                <Border Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1"
+                        Padding="40" HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
+                    <StackPanel>
+                        <TextBlock Text="🔑 Account Access" FontSize="24" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,6" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Login to save your semesters to the cloud." FontSize="13" Foreground="#8b949e" Margin="0,0,0,24" HorizontalAlignment="Center"/>
+
+                        <TextBlock Text="Username" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                        <TextBox x:Name="LoginUsername" Margin="0,0,0,16"/>
+
+                        <TextBlock Text="Password" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                        <PasswordBox x:Name="LoginPassword" Margin="0,0,0,24"/>
+
+                        <Button Content="Login" Style="{StaticResource PrimaryButton}" Margin="0,0,0,12" Click="DoLogin_Click"/>
+                        <Button Content="Create Account" Style="{StaticResource SecondaryButton}" Click="DoRegister_Click"/>
+                        
+                        <TextBlock x:Name="LoginMessage" Text="" Foreground="#f85149" Margin="0,16,0,0" HorizontalAlignment="Center" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</Window>
