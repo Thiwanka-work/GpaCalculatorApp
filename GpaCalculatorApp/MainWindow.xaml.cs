@@ -181,7 +181,7 @@ namespace GpaCalculatorApp
             LoginMessage.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#8b949e"));
             LoginMessage.Text = "Creating account…";
 
-            if (string.IsNullOrWhiteSpace(RegisterName.Text) ||
+            if (string.IsNullOrWhiteSpace(RegisterNameInput.Text) ||
                 string.IsNullOrWhiteSpace(RegisterEmail.Text) ||
                 string.IsNullOrWhiteSpace(RegisterPassword.Password))
             {
@@ -191,7 +191,7 @@ namespace GpaCalculatorApp
             }
 
             ApiClient.IsOnlineMode = true;
-            var res = await ApiClient.RegisterAsync(RegisterName.Text.Trim(), RegisterEmail.Text.Trim(), RegisterPassword.Password);
+            var res = await ApiClient.RegisterAsync(RegisterNameInput.Text.Trim(), RegisterEmail.Text.Trim(), RegisterPassword.Password);
 
             ApiClient.IsOnlineMode = false;
             LoginMessage.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(res.Success ? "#3fb950" : "#f85149"));

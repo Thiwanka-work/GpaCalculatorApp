@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Smart GPA Assistant" Height="720" Width="1120"
         WindowStartupLocation="CenterScreen" Background="#0d1117"
-        FontFamily="Segoe UI">
+        FontFamily="Segoe UI" Icon="/app_icon.ico">
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -432,7 +432,7 @@
                         <!-- ── REGISTER PANEL ── -->
                         <StackPanel x:Name="RegisterPanel" Visibility="Collapsed">
                             <TextBlock Text="Full Name" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
-                            <TextBox x:Name="RegisterName" Margin="0,0,0,16"/>
+                            <TextBox x:Name="RegisterNameInput" Margin="0,0,0,16"/>
 
                             <TextBlock Text="Email" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
                             <TextBox x:Name="RegisterEmail" Margin="0,0,0,16"/>

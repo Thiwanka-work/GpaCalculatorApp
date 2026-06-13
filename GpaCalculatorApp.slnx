@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="GpaCalculatorApp/GpaCalculatorApp.csproj" />
   <Project Path="GpaCalculator.Api/GpaCalculator.Api.csproj" />
+  <Project Path="GpaCalculatorApp/GpaCalculatorApp.csproj" />
 </Solution>
