@@ -22,9 +22,13 @@
 
                 <!-- Logo -->
                 <StackPanel Grid.Row="0" Margin="20,30,20,30">
-                    <TextBlock Text="🎓" FontSize="40" HorizontalAlignment="Center"/>
+                    <Image Source="/app_icon.png" Width="64" Height="64" HorizontalAlignment="Center" Margin="0,0,0,10">
+                        <Image.Clip>
+                            <RectangleGeometry Rect="0,0,64,64" RadiusX="12" RadiusY="12"/>
+                        </Image.Clip>
+                    </Image>
                     <TextBlock Text="GPA Assistant" FontSize="22" FontWeight="Bold"
-                               Foreground="#f0f6fc" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                               Foreground="#f0f6fc" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                     <TextBlock Text="Smart Academic Advisor" FontSize="12"
                                Foreground="#8b949e" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                     <Border Height="1" Background="#30363d" Margin="0,20,0,0"/>
@@ -32,21 +36,47 @@
 
                 <!-- Nav -->
                 <StackPanel Grid.Row="1" Margin="12,0">
-                    <Button x:Name="NavGpaBtn" Content="📊  GPA Calculator"
-                            Style="{StaticResource NavButton}" Click="NavGpa_Click"/>
-                    <Button x:Name="NavCgpaBtn" Content="📈  CGPA Calculator"
-                            Style="{StaticResource NavButton}" Click="NavCgpa_Click"/>
-                    <Button x:Name="NavTargetBtn" Content="🎯  Target Analytics"
-                            Style="{StaticResource NavButton}" Click="NavTarget_Click"/>
-                    <Button x:Name="NavAdvisorBtn" Content="💡  Agent Advisor"
-                            Style="{StaticResource NavButton}" Click="NavAdvisor_Click"/>
+                    <Button x:Name="NavGpaBtn" Style="{StaticResource NavButton}" Click="NavGpa_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="GPA Calculator" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavCgpaBtn" Style="{StaticResource NavButton}" Click="NavCgpa_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📈" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="CGPA Calculator" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavTargetBtn" Style="{StaticResource NavButton}" Click="NavTarget_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎯" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Target Analytics" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavAdvisorBtn" Style="{StaticResource NavButton}" Click="NavAdvisor_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💡" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Agent Advisor" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- Footer / Controls -->
                 <StackPanel Grid.Row="2" Margin="12,0,12,20">
-                    <Button x:Name="LoginBtn" Content="🔑  Login / Register" Style="{StaticResource SecondaryButton}" Click="ShowLogin_Click"/>
-                    <Button x:Name="LogoutBtn" Content="🚪  Logout" Style="{StaticResource SecondaryButton}" Margin="0,8,0,0" Visibility="Collapsed" Click="DoLogout_Click"
-                            Background="#2d1a1a" BorderBrush="#f85149" Foreground="#f85149"/>
+                    <Button x:Name="LoginBtn" Style="{StaticResource SecondaryButton}" Click="ShowLogin_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔑" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Login / Register" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="LogoutBtn" Style="{StaticResource SecondaryButton}" Margin="0,8,0,0" Visibility="Collapsed" Click="DoLogout_Click"
+                            Background="#2d1a1a" BorderBrush="#f85149" Foreground="#f85149">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🚪" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Logout" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                     <TextBlock x:Name="UserStatusText" Text="⚫ Offline / Local Mode" FontSize="11" Foreground="#8b949e" HorizontalAlignment="Center" Margin="0,10,0,0"/>
                     <TextBlock x:Name="LoggedInUserText" Text="" FontSize="11" Foreground="#3fb950" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                 </StackPanel>
@@ -98,8 +128,13 @@
                         </ScrollViewer>
 
                         <!-- Add Button -->
-                        <Button Grid.Row="2" Content="＋  Add Subject" Style="{StaticResource SecondaryButton}"
-                                HorizontalAlignment="Left" Margin="0,12,0,0" Click="AddSubject_Click"/>
+                        <Button Grid.Row="2" Style="{StaticResource SecondaryButton}"
+                                HorizontalAlignment="Left" Margin="0,12,0,0" Click="AddSubject_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="＋" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Add Subject" FontSize="14" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -160,8 +195,18 @@
                         </ScrollViewer>
 
                         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
-                            <Button Content="＋  Add Semester" Style="{StaticResource SecondaryButton}" Click="AddSemester_Click"/>
-                            <Button x:Name="SaveSemestersBtn" Content="💾  Save to Cloud" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Click="SaveSemesters_Click" Visibility="Collapsed"/>
+                            <Button Style="{StaticResource SecondaryButton}" Click="AddSemester_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="＋" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Add Semester" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="SaveSemestersBtn" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Click="SaveSemesters_Click" Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="💾" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Save to Cloud" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -205,8 +250,13 @@
                     <!-- Left: Parameters -->
                     <Border Grid.Column="0" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="25" Margin="0,0,20,0" VerticalAlignment="Top">
                         <StackPanel>
-                            <Button Content="🔄 Load from CGPA Calculator" Style="{StaticResource SecondaryButton}"
-                                    HorizontalAlignment="Stretch" Margin="0,0,0,16" Click="LoadTargetFromCgpa_Click"/>
+                            <Button Style="{StaticResource SecondaryButton}"
+                                    HorizontalAlignment="Stretch" Margin="0,0,0,16" Click="LoadTargetFromCgpa_Click">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="🔄" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Load from CGPA Calculator" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             
                             <!-- Current CGPA -->
                             <TextBlock Text="Current CGPA" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
@@ -336,7 +386,12 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="AdvisorGpaInput" Grid.Column="0" Text="0.00" VerticalAlignment="Center"/>
-                                    <Button Grid.Column="1" Content="🔄 Sync" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Padding="12,8" Click="SyncGpaToAdvisor_Click" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Padding="12,8" Click="SyncGpaToAdvisor_Click" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="🔄" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Sync" FontSize="14" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
                                 </Grid>
                                 <Button Content="Analyze Performance" Style="{StaticResource PrimaryButton}" Margin="0,12,0,0" HorizontalAlignment="Stretch" Click="GetAdvice_Click"/>
                             </StackPanel>
@@ -370,7 +425,11 @@
                     <StackPanel>
 
                         <!-- Icon + Title -->
-                        <TextBlock Text="🎓" FontSize="44" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <Image Source="/app_icon.png" Width="64" Height="64" HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <Image.Clip>
+                                <RectangleGeometry Rect="0,0,64,64" RadiusX="12" RadiusY="12"/>
+                            </Image.Clip>
+                        </Image>
                         <TextBlock Text="GPA Assistant" FontSize="22" FontWeight="Bold"
                                    Foreground="#f0f6fc" HorizontalAlignment="Center"/>
                         <TextBlock Text="Sign in or create an account to sync your data" FontSize="12"
