@@ -24,20 +24,42 @@ namespace GpaCalculator.Api.Controllers
         [HttpPost("register")]
         public IActionResult RegisterUser([FromBody] RegisterRequest request)
         {
-            if (_context.Users.Any(u => u.Email == request.Email))
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             {
-                return BadRequest(new { Message = "Email already exists." });
+                return BadRequest(new { Message = "Email and password are required." });
             }
 
-            var user = new User
+            if (_context.Users.Any(u => u.Email == request.Email))
             {
-                Name = request.Name,
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
-            };
+                return BadRequest(new { Message = "Email already registered." });
+            }
 
-            _context.Users.Add(user);
-            _context.SaveChanges();
+            // Password strength validation
+            if (request.Password.Length < 6)
+            {
+                return BadRequest(new { Message = "Password must be at least 6 characters long." });
+            }
+            if (!request.Password.Any(char.IsDigit) || !request.Password.Any(char.IsLetter))
+            {
+                return BadRequest(new { Message = "Password must contain both letters and numbers." });
+            }
+
+            try
+            {
+                var user = new User
+                {
+                    Name = request.Name,
+                    Email = request.Email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+                };
+
+                _context.Users.Add(user);
+                _context.SaveChanges();
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+            {
+                return BadRequest(new { Message = "Email already exists in the system." });
+            }
 
             return Ok(new { Message = "Registration successful" });
         }
@@ -53,7 +75,7 @@ namespace GpaCalculator.Api.Controllers
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var keyStr = _configuration["JwtSettings:Secret"];
+            var keyStr = Environment.GetEnvironmentVariable("JWT_SECRET") ?? _configuration["JwtSettings:Secret"];
             if (string.IsNullOrEmpty(keyStr)) return StatusCode(500, "JWT Secret not configured.");
             
             var key = Encoding.ASCII.GetBytes(keyStr);

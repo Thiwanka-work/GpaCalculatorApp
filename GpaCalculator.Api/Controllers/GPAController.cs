@@ -89,6 +89,7 @@ namespace GpaCalculator.Api.Controllers
              {
                  record.GPA = request.GPA;
                  record.CGPA = request.CGPA;
+                 record.Credits = request.Credits;
              }
              else
              {
@@ -97,7 +98,8 @@ namespace GpaCalculator.Api.Controllers
                      UserId = userId,
                      Semester = request.Semester,
                      GPA = request.GPA,
-                     CGPA = request.CGPA
+                     CGPA = request.CGPA,
+                     Credits = request.Credits
                  });
              }
              
@@ -166,5 +168,6 @@ namespace GpaCalculator.Api.Controllers
         public string Semester { get; set; } = string.Empty;
         public double GPA { get; set; }
         public double CGPA { get; set; }
+        public int Credits { get; set; }
     }
 }

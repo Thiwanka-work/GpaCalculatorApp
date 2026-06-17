@@ -34,6 +34,7 @@ namespace GpaCalculatorApp
 
         private int _subjectCount = 0;
         private int _semesterCount = 0;
+        private GeminiService? _geminiService;
 
         public MainWindow()
         {
@@ -62,6 +63,7 @@ namespace GpaCalculatorApp
             CgpaPage.Visibility   = Visibility.Collapsed;
             TargetPage.Visibility = Visibility.Collapsed;
             AdvisorPage.Visibility= Visibility.Collapsed;
+            CalendarPage.Visibility = Visibility.Collapsed;
             LoginPage.Visibility  = Visibility.Collapsed;
 
             page.Visibility = Visibility.Visible;
@@ -73,9 +75,9 @@ namespace GpaCalculatorApp
         {
             var dim = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#8b949e"));
             NavGpaBtn.Foreground  = dim; NavCgpaBtn.Foreground  = dim;
-            NavTargetBtn.Foreground= dim; NavAdvisorBtn.Foreground= dim;
+            NavTargetBtn.Foreground= dim; NavAdvisorBtn.Foreground= dim; NavCalendarBtn.Foreground = dim;
             NavGpaBtn.Background  = Brushes.Transparent; NavCgpaBtn.Background  = Brushes.Transparent;
-            NavTargetBtn.Background= Brushes.Transparent; NavAdvisorBtn.Background= Brushes.Transparent;
+            NavTargetBtn.Background= Brushes.Transparent; NavAdvisorBtn.Background= Brushes.Transparent; NavCalendarBtn.Background = Brushes.Transparent;
         }
 
         private void SetNavActive(Button btn)
@@ -88,6 +90,7 @@ namespace GpaCalculatorApp
         private void NavCgpa_Click(object s, RoutedEventArgs e)    => ShowPage(CgpaPage,    NavCgpaBtn);
         private void NavTarget_Click(object s, RoutedEventArgs e)  => ShowPage(TargetPage,  NavTargetBtn);
         private void NavAdvisor_Click(object s, RoutedEventArgs e) => ShowPage(AdvisorPage, NavAdvisorBtn);
+        private void NavCalendar_Click(object s, RoutedEventArgs e) => ShowPage(CalendarPage, NavCalendarBtn);
         private void ShowLogin_Click(object s, RoutedEventArgs e)  => ShowPage(LoginPage,   null);
 
         // ═══════════ UPDATE STATUS ═══════════
@@ -421,12 +424,43 @@ namespace GpaCalculatorApp
         private void CalculateTarget_Click(object s, RoutedEventArgs e)
         {
             if (!double.TryParse(TargetCurrentCgpa.Text,       out double currentCgpa)      ||
-                !double.TryParse(TargetCreditsCompleted.Text,  out double creditsCompleted)  ||
-                !double.TryParse(TargetRemainingCredits.Text,  out double remainingCredits)  ||
+                !double.TryParse(TargetCreditsCompleted.Text,  out double creditsCompleted))
+            {
+                MessageBox.Show("Please fill in current CGPA and completed credits.", "Invalid Input");
+                return;
+            }
+
+            int mode = TargetModeCombo.SelectedIndex;
+
+            if (mode == 2) // What-if Analysis
+            {
+                if (!double.TryParse(WhatIfFutureCredits.Text, out double futureCredits) ||
+                    !double.TryParse(WhatIfFutureGpa.Text, out double futureGpa) ||
+                    futureCredits <= 0)
+                {
+                    MessageBox.Show("Please fill in valid what-if values.", "Invalid Input");
+                    return;
+                }
+                
+                double currentQpWhatIf = currentCgpa * creditsCompleted;
+                double futureQP = futureGpa * futureCredits;
+                double newCgpa = creditsCompleted + futureCredits > 0 ? (currentQpWhatIf + futureQP) / (creditsCompleted + futureCredits) : 0;
+                
+                TargetResultTitle.Text = $"🔮 Projected CGPA: {newCgpa:F2}";
+                TargetResultTitle.Foreground = GetClassBrush(newCgpa);
+                TargetResultText.Text = $"If you earn a {futureGpa:F2} GPA over {futureCredits} credits, your new CGPA will be {newCgpa:F2} ({GetClassification(newCgpa)}).";
+                
+                TargetUpgradePathsPanel.Children.Clear();
+                TargetResultBorder.Visibility = Visibility.Visible;
+                TargetPlaceholderText.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            if (!double.TryParse(TargetRemainingCredits.Text,  out double remainingCredits)  ||
                 !int.TryParse   (TargetRemainingSemesters.Text, out int    remainingSemesters)||
                 remainingCredits <= 0 || remainingSemesters <= 0) 
             {
-                MessageBox.Show("Please fill in all fields with valid values.", "Invalid Input");
+                MessageBox.Show("Please fill in all remaining credits and semesters.", "Invalid Input");
                 return;
             }
 
@@ -572,19 +606,21 @@ namespace GpaCalculatorApp
             if (sender is Button btn)
             {
                 string text = btn.Content?.ToString() ?? "";
+                if (text.StartsWith("📖 ") || text.StartsWith("📅 ") || text.StartsWith("📈 ") || text.StartsWith("📚 "))
+                    text = text.Substring(3); // Remove icon
                 ChatInputTextBox.Text = text;
-                SendChat();
+                _ = SendChatAsync();
             }
         }
 
         private void ChatInputTextBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter) { e.Handled = true; SendChat(); }
+            if (e.Key == Key.Enter && ChatInputTextBox.IsEnabled) { e.Handled = true; _ = SendChatAsync(); }
         }
 
-        private void SendChat_Click(object s, RoutedEventArgs e) => SendChat();
+        private async void SendChat_Click(object s, RoutedEventArgs e) => await SendChatAsync();
 
-        private void SendChat()
+        private async Task SendChatAsync()
         {
             string input = ChatInputTextBox.Text.Trim();
             if (string.IsNullOrWhiteSpace(input)) return;
@@ -592,11 +628,69 @@ namespace GpaCalculatorApp
             AddChatMessage("user", input);
             ChatInputTextBox.Text = "";
 
-            string response = GenerateAdvisorResponse(input.ToLowerInvariant());
-            AddChatMessage("agent", response);
+            if (_geminiService == null && !string.IsNullOrEmpty(ApiClient.GeminiApiKey))
+            {
+                _geminiService = new GeminiService(ApiClient.GeminiApiKey);
+            }
+
+            if (_geminiService != null)
+            {
+                ChatInputTextBox.IsEnabled = false;
+                SendChatBtn.IsEnabled = false;
+                SendChatBtn.Content = "⏳";
+                
+                string systemContext = GetSystemContextForGemini();
+                string response = await _geminiService.AskGeminiAsync(input, systemContext);
+                
+                ChatInputTextBox.IsEnabled = true;
+                SendChatBtn.IsEnabled = true;
+                SendChatBtn.Content = "Send";
+                AddChatMessage("agent", response);
+            }
+            else
+            {
+                string response = GenerateAdvisorResponse(input.ToLowerInvariant());
+                AddChatMessage("agent", response);
+            }
 
             // Auto-scroll
             ChatScrollViewer.ScrollToBottom();
+        }
+
+        private string GetSystemContextForGemini()
+        {
+            double totalQP = 0, totalCredits = 0;
+            foreach (Border row in CgpaSemestersPanel.Children)
+            {
+                var grid = (Grid)row.Child;
+                TextBox? gpaBox = null, creditsBox = null;
+                foreach (UIElement child in grid.Children)
+                    if (child is TextBox tb)
+                    {
+                        if (tb.Tag?.ToString() == "SemGpa") gpaBox = tb;
+                        else if (tb.Tag?.ToString() == "SemCredits") creditsBox = tb;
+                    }
+                if (gpaBox != null && creditsBox != null && double.TryParse(gpaBox.Text, out double g) && double.TryParse(creditsBox.Text, out double c))
+                {
+                    totalQP += g * c;
+                    totalCredits += c;
+                }
+            }
+            double cgpa = totalCredits > 0 ? totalQP / totalCredits : 0;
+            string currentClass = GetClassification(cgpa);
+
+            var subjectNames = GetCurrentSubjectNames();
+            string subjectsStr = subjectNames.Count > 0 ? string.Join(", ", subjectNames) : "None entered";
+
+            return $@"You are an AI Academic Advisor for a university student. 
+Be highly encouraging, clear, and structure your responses nicely with bullet points and emojis. Use **bold** text to emphasize key points.
+Student's Current Profile:
+- Total Credits Completed: {totalCredits}
+- Current CGPA: {cgpa:F2}
+- Current Classification: {currentClass}
+- Current Subjects Enrolled: {subjectsStr}
+
+Answer the student's questions directly and conversationally using this data.";
         }
 
         private string GenerateAdvisorResponse(string q)
@@ -871,14 +965,23 @@ namespace GpaCalculatorApp
                 });
             }
 
-            sp.Children.Add(new TextBlock
+            var msgText = new TextBlock
             {
-                Text        = message,
                 FontSize    = 13,
                 Foreground  = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isUser ? "#ffffff" : "#c9d1d9")),
                 TextWrapping= TextWrapping.Wrap,
                 LineHeight  = 22
-            });
+            };
+            
+            var parts = message.Split(new[] { "**" }, StringSplitOptions.None);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (i % 2 == 1 && i < parts.Length - 1) // Bold text inside **
+                    msgText.Inlines.Add(new System.Windows.Documents.Run(parts[i]) { FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isUser ? "#ffffff" : "#f0f6fc")) });
+                else
+                    msgText.Inlines.Add(new System.Windows.Documents.Run(parts[i]));
+            }
+            sp.Children.Add(msgText);
 
             // Timestamp
             sp.Children.Add(new TextBlock
@@ -935,5 +1038,108 @@ namespace GpaCalculatorApp
             >= 3.00 => "#d29922",
             _       => "#f85149"
         };
+
+        private void TargetModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (TargetModeCombo == null || TargetGoalInputsPanel == null || TargetWhatIfInputsPanel == null) return;
+            int mode = TargetModeCombo.SelectedIndex;
+            if (mode == 0) // All Remaining Semesters
+            {
+                TargetGoalInputsPanel.Visibility = Visibility.Visible;
+                TargetWhatIfInputsPanel.Visibility = Visibility.Collapsed;
+                if (TargetSemestersLabel != null) TargetSemestersLabel.Visibility = Visibility.Visible;
+                if (TargetRemainingSemesters != null) { TargetRemainingSemesters.Visibility = Visibility.Visible; TargetRemainingSemesters.Text = "4"; }
+                if (TargetCreditsLabel != null) TargetCreditsLabel.Text = "Remaining Credits";
+            }
+            else if (mode == 1) // Next Semester Only
+            {
+                TargetGoalInputsPanel.Visibility = Visibility.Visible;
+                TargetWhatIfInputsPanel.Visibility = Visibility.Collapsed;
+                if (TargetSemestersLabel != null) TargetSemestersLabel.Visibility = Visibility.Collapsed;
+                if (TargetRemainingSemesters != null) { TargetRemainingSemesters.Visibility = Visibility.Collapsed; TargetRemainingSemesters.Text = "1"; }
+                if (TargetCreditsLabel != null) TargetCreditsLabel.Text = "Next Semester Credits";
+            }
+            else if (mode == 2) // What-if Analysis
+            {
+                TargetGoalInputsPanel.Visibility = Visibility.Collapsed;
+                TargetWhatIfInputsPanel.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void AddReminder_Click(object s, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(RemTitle.Text) || !RemDatePicker.SelectedDate.HasValue || string.IsNullOrWhiteSpace(RemTimeText.Text))
+            {
+                MessageBox.Show("Please provide a title, date, and time.", "Invalid Reminder");
+                return;
+            }
+
+            if (!TimeSpan.TryParse(RemTimeText.Text, out TimeSpan time))
+            {
+                MessageBox.Show("Please enter time in HH:mm format (24-hour).", "Invalid Time");
+                return;
+            }
+
+            DateTime deadline = RemDatePicker.SelectedDate.Value.Date + time;
+            string title = RemTitle.Text.Trim();
+            string subject = RemSubject.Text.Trim();
+            string type = (RemTypeCombo.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Task";
+            
+            var row = MakeRowBorder();
+            var sp = new StackPanel();
+            
+            var titleText = new TextBlock { Text = $"{type}: {title}", FontWeight = FontWeights.Bold, Foreground = C("#f0f6fc"), FontSize = 14 };
+            sp.Children.Add(titleText);
+            
+            if (!string.IsNullOrEmpty(subject))
+            {
+                sp.Children.Add(new TextBlock { Text = $"Subject: {subject}", Foreground = C("#8b949e"), FontSize = 12, Margin = new Thickness(0,2,0,0) });
+            }
+            
+            double daysLeft = (deadline - DateTime.Now).TotalDays;
+            string dueString = daysLeft < 0 ? "Overdue" : 
+                               daysLeft < 1 ? $"Due in {(int)(deadline - DateTime.Now).TotalHours} hours" : 
+                               $"Due in {(int)daysLeft} days";
+            
+            var dueText = new TextBlock { Text = dueString, Foreground = daysLeft < 3 ? C("#f85149") : C("#3fb950"), FontSize = 12, Margin = new Thickness(0,4,0,0) };
+            sp.Children.Add(dueText);
+
+            var removeBtn = new Button { Content = "Delete", Style = (Style)FindResource("DangerButton"), HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0,4,0,0) };
+            removeBtn.Click += (_, _) => { RemindersPanel.Children.Remove(row); UpdateReminderCounts(); };
+            sp.Children.Add(removeBtn);
+
+            row.Child = sp;
+            row.Tag = deadline;
+
+            int insertIndex = 0;
+            foreach (Border child in RemindersPanel.Children)
+            {
+                if (child.Tag is DateTime t && t > deadline) break;
+                insertIndex++;
+            }
+            RemindersPanel.Children.Insert(insertIndex, row);
+
+            RemTitle.Text = "";
+            RemSubject.Text = "";
+            RemNotes.Text = "";
+
+            UpdateReminderCounts();
+        }
+
+        private void UpdateReminderCounts()
+        {
+            int today = 0, week = 0;
+            foreach (Border child in RemindersPanel.Children)
+            {
+                if (child.Tag is DateTime t)
+                {
+                    double days = (t - DateTime.Now).TotalDays;
+                    if (days >= 0 && days < 1) today++;
+                    if (days >= 0 && days < 7) week++;
+                }
+            }
+            TodayTasksCount.Text = $"{today} Tasks";
+            WeekTasksCount.Text = $"{week} Deadlines";
+        }
     }
 }

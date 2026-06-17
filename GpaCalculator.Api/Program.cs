@@ -14,9 +14,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Setup Authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKeyStr = jwtSettings["Secret"];
-if (string.IsNullOrEmpty(secretKeyStr)) throw new InvalidOperationException("JWT Secret not found in configuration.");
+var secretKeyStr = Environment.GetEnvironmentVariable("JWT_SECRET") ?? builder.Configuration["JwtSettings:Secret"];
+if (string.IsNullOrEmpty(secretKeyStr)) throw new InvalidOperationException("JWT Secret not found in environment or configuration.");
 
 var secretKey = Encoding.ASCII.GetBytes(secretKeyStr);
 
@@ -29,8 +28,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(secretKey)
         };
     });
@@ -42,23 +41,32 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+}
+else
+{
+    app.MapGet("/", () => Results.Ok("Smart GPA Assistant API is running."));
+}
 
 app.MapControllers();
 
-// Ensure Database is created and migrations are applied if we are in dev (for local testing without manual migrate)
+// Ensure Database migrations are applied
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // Automatically creates the tables locally if they don't exist.
-    // For production (Azure), EF Core migrations should be run or a SQL script executed.
-    db.Database.EnsureCreated();
+    // Apply EF migrations automatically at start
+    db.Database.Migrate();
 }
 
 app.Run();

@@ -10,10 +10,70 @@ namespace GpaCalculatorApp
 {
     public class ApiClient
     {
-        private static readonly HttpClient _http = new HttpClient { BaseAddress = new Uri("http://localhost:56278") }; // Change this to Azure URL when deployed
+        private static string _apiBaseUrl = "https://smartgpa-api-thiwanka-aagsefhsgyfweuar.southeastasia-01.azurewebsites.net";
+        private static readonly HttpClient _http;
         private static string? _jwtToken = null;
         public static bool IsOnlineMode { get; set; } = false;
 
+        static ApiClient()
+        {
+            LoadSettings("appsettings.json");
+            LoadSettings("appsettings.local.json");
+
+            GeminiApiKey = FirstNotBlank(
+                Environment.GetEnvironmentVariable("GEMINI_API_KEY"),
+                GeminiApiKey);
+
+            _http = new HttpClient { BaseAddress = new Uri(_apiBaseUrl) };
+        }
+
+        public static string? GeminiApiKey { get; private set; }
+
+        private static void LoadSettings(string fileName)
+        {
+            try
+            {
+                string configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+                if (!System.IO.File.Exists(configPath)) return;
+
+                string json = System.IO.File.ReadAllText(configPath);
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("ApiSettings", out var apiSettings))
+                {
+                    if (apiSettings.TryGetProperty("BaseUrl", out var baseUrlProp))
+                    {
+                        _apiBaseUrl = FirstNotBlank(baseUrlProp.GetString(), _apiBaseUrl) ?? _apiBaseUrl;
+                    }
+
+                    if (apiSettings.TryGetProperty("GeminiApiKey", out var apiKeyProp))
+                    {
+                        GeminiApiKey = FirstNotBlank(apiKeyProp.GetString(), GeminiApiKey);
+                    }
+                }
+
+                if (doc.RootElement.TryGetProperty("GeminiApiKey", out var rootApiKeyProp))
+                {
+                    GeminiApiKey = FirstNotBlank(rootApiKeyProp.GetString(), GeminiApiKey);
+                }
+            }
+            catch
+            {
+                // Keep the app usable if a local settings file is missing or malformed.
+            }
+        }
+
+        private static string? FirstNotBlank(params string?[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value)) return value.Trim();
+            }
+
+            return null;
+        }
+
+        public static string ApiBaseUrl => _apiBaseUrl;
         public static bool IsLoggedIn => !string.IsNullOrEmpty(_jwtToken);
         
         public static string? CurrentUserEmail { get; private set; }
@@ -55,6 +115,13 @@ namespace GpaCalculatorApp
                     return (true, "Success", token, name, retEmail);
                 }
                 var errorRes = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = JsonDocument.Parse(errorRes);
+                    if (doc.RootElement.TryGetProperty("message", out var msg))
+                        return (false, msg.GetString() ?? "Invalid email or password.", null, null, null);
+                }
+                catch { }
                 return (false, "Invalid email or password.", null, null, null);
             }
             catch (HttpRequestException)
@@ -75,20 +142,26 @@ namespace GpaCalculatorApp
             try
             {
                 var response = await _http.PostAsync("/api/auth/register", content);
+                var body = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode) return (true, "Registration successful. You can now log in.");
                 
-                // Read the actual error from the API
-                var errorBody = await response.Content.ReadAsStringAsync();
                 try
                 {
-                    using var doc = JsonDocument.Parse(errorBody);
+                    using var doc = JsonDocument.Parse(body);
                     if (doc.RootElement.TryGetProperty("message", out var msg))
                         return (false, msg.GetString() ?? "Registration failed.");
                     if (doc.RootElement.TryGetProperty("Message", out var msg2))
                         return (false, msg2.GetString() ?? "Registration failed.");
                 }
                 catch { }
-                return (false, string.IsNullOrWhiteSpace(errorBody) ? "Registration failed." : errorBody);
+                
+                // If the body is a huge HTML error page, don't show the raw HTML in the UI
+                if (body.TrimStart().StartsWith("<!DOCTYPE html", StringComparison.OrdinalIgnoreCase) || body.Contains("<html", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "❌ Server Error: The Azure API failed to start. Please check Database connections or Environment Variables in Azure.");
+                }
+
+                return (false, string.IsNullOrWhiteSpace(body) ? "Registration failed." : body);
             }
             catch (HttpRequestException)
             {
@@ -102,12 +175,19 @@ namespace GpaCalculatorApp
 
         public static async Task<double?> CalculateGpaOnlineAsync(List<SubjectDto> subjects)
         {
-            var content = new StringContent(JsonSerializer.Serialize(subjects), Encoding.UTF8, "application/json");
-            var response = await _http.PostAsync("/api/gpa/calculate", content);
-            if (!response.IsSuccessStatusCode) return null;
-            var resStr = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(resStr);
-            return doc.RootElement.GetProperty("gpa").GetDouble();
+            try
+            {
+                var content = new StringContent(JsonSerializer.Serialize(subjects), Encoding.UTF8, "application/json");
+                var response = await _http.PostAsync("/api/gpa/calculate", content);
+                if (!response.IsSuccessStatusCode) return null;
+                var resStr = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(resStr);
+                return doc.RootElement.GetProperty("gpa").GetDouble();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static async Task<List<GpaRecordDto>?> GetGpaRecordsAsync()
@@ -166,6 +246,7 @@ namespace GpaCalculatorApp
         public string Semester { get; set; } = "";
         public double GPA { get; set; }
         public double CGPA { get; set; }
+        public int Credits { get; set; }
     }
 
     // Keep these for UI calculations

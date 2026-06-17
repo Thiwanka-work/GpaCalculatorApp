@@ -10,3 +10,6 @@ obj/
 # User-specific files
 *.rsuser
 *.DotSettings.user
+
+# Local secrets
+appsettings.local.json
