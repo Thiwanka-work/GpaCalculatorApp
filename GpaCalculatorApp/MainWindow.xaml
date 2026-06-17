@@ -60,6 +60,12 @@
                             <TextBlock Text="Agent Advisor" FontSize="14" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
+                    <Button x:Name="NavCalendarBtn" Style="{StaticResource NavButton}" Click="NavCalendar_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📅" FontSize="20" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Academic Calendar" FontSize="14" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- Footer / Controls -->
@@ -237,79 +243,105 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="0,0,0,20">
-                    <TextBlock Text="🎯 Advanced Target Analytics" FontSize="26" FontWeight="Bold" Foreground="#f0f6fc"/>
-                    <TextBlock Text="Predict required GPA based on your current semesters" FontSize="14" Foreground="#8b949e" Margin="0,6,0,0"/>
+                    <TextBlock Text="🎯 Target GPA Planner" FontSize="26" FontWeight="Bold" Foreground="#f0f6fc"/>
+                    <TextBlock Text="Calculate required GPA for future semesters or perform what-if analysis" FontSize="14" Foreground="#8b949e" Margin="0,6,0,0"/>
                 </StackPanel>
 
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1.1*"/>
                         <ColumnDefinition Width="1.2*"/>
                     </Grid.ColumnDefinitions>
                     
                     <!-- Left: Parameters -->
-                    <Border Grid.Column="0" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="25" Margin="0,0,20,0" VerticalAlignment="Top">
-                        <StackPanel>
-                            <Button Style="{StaticResource SecondaryButton}"
-                                    HorizontalAlignment="Stretch" Margin="0,0,0,16" Click="LoadTargetFromCgpa_Click">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <TextBlock Text="🔄" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Load from CGPA Calculator" FontSize="14" VerticalAlignment="Center"/>
+                    <Border Grid.Column="0" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="25" Margin="0,0,20,0" VerticalAlignment="Stretch">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <Button Style="{StaticResource SecondaryButton}"
+                                        HorizontalAlignment="Stretch" Margin="0,0,0,16" Click="LoadTargetFromCgpa_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="🔄" FontSize="18" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Load from CGPA Calculator" FontSize="14" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Planning Mode selector -->
+                                <TextBlock Text="Planning Mode" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <ComboBox x:Name="TargetModeCombo" Margin="0,0,0,14" SelectedIndex="0" SelectionChanged="TargetModeCombo_SelectionChanged">
+                                    <ComboBoxItem Content="All Remaining Semesters"/>
+                                    <ComboBoxItem Content="Next Semester Only"/>
+                                    <ComboBoxItem Content="What-if Analysis"/>
+                                </ComboBox>
+                                
+                                <!-- Current CGPA -->
+                                <TextBlock Text="Current CGPA" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBox x:Name="TargetCurrentCgpa" Text="0.00" Margin="0,0,0,14"/>
+
+                                <!-- Credits Completed -->
+                                <TextBlock Text="Total Credits Completed" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBox x:Name="TargetCreditsCompleted" Text="0" Margin="0,0,0,14"/>
+
+                                <!-- Fields for 'All Remaining Semesters' and 'Next Semester Only' -->
+                                <StackPanel x:Name="TargetGoalInputsPanel" Visibility="Visible">
+                                    <!-- Target Class -->
+                                    <TextBlock Text="Target Degree Class" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                    <ComboBox x:Name="TargetClassCombo" Margin="0,0,0,14" SelectedIndex="0">
+                                        <ComboBoxItem Content="First Class (3.70)"/>
+                                        <ComboBoxItem Content="Second Upper (3.30)"/>
+                                        <ComboBoxItem Content="Second Lower (3.00)"/>
+                                        <ComboBoxItem Content="Pass (2.00)"/>
+                                    </ComboBox>
+
+                                    <!-- Remaining / Next Credits -->
+                                    <TextBlock x:Name="TargetCreditsLabel" Text="Remaining Credits" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                    <TextBox x:Name="TargetRemainingCredits" Text="60" Margin="0,0,0,14"/>
+
+                                    <!-- Remaining Semesters -->
+                                    <TextBlock x:Name="TargetSemestersLabel" Text="Remaining Semesters" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                    <TextBox x:Name="TargetRemainingSemesters" Text="4" Margin="0,0,0,20"/>
                                 </StackPanel>
-                            </Button>
-                            
-                            <!-- Current CGPA -->
-                            <TextBlock Text="Current CGPA" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
-                            <TextBox x:Name="TargetCurrentCgpa" Text="0.00" Margin="0,0,0,14"/>
 
-                            <!-- Credits Completed -->
-                            <TextBlock Text="Total Credits Completed" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
-                            <TextBox x:Name="TargetCreditsCompleted" Text="0" Margin="0,0,0,14"/>
+                                <!-- Fields for 'What-if Analysis' -->
+                                <StackPanel x:Name="TargetWhatIfInputsPanel" Visibility="Collapsed">
+                                    <TextBlock Text="Next/Future Semester Credits" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                    <TextBox x:Name="WhatIfFutureCredits" Text="15" Margin="0,0,0,14"/>
 
-                            <!-- Target Class -->
-                            <TextBlock Text="Target Class" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
-                            <ComboBox x:Name="TargetClassCombo" Margin="0,0,0,14" SelectedIndex="0">
-                                <ComboBoxItem Content="First Class (3.70)"/>
-                                <ComboBoxItem Content="Second Upper (3.30)"/>
-                                <ComboBoxItem Content="Second Lower (3.00)"/>
-                            </ComboBox>
+                                    <TextBlock Text="Target GPA for Future Semesters" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                    <TextBox x:Name="WhatIfFutureGpa" Text="3.50" Margin="0,0,0,20"/>
+                                </StackPanel>
 
-                            <!-- Remaining Credits -->
-                            <TextBlock Text="Remaining Credits" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
-                            <TextBox x:Name="TargetRemainingCredits" Text="60" Margin="0,0,0,14"/>
-
-                            <!-- Remaining Semesters -->
-                            <TextBlock Text="Remaining Semesters" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
-                            <TextBox x:Name="TargetRemainingSemesters" Text="4" Margin="0,0,0,20"/>
-
-                            <!-- Calculate -->
-                            <Button Content="Calculate Required GPA" Style="{StaticResource PrimaryButton}"
-                                    HorizontalAlignment="Stretch" Click="CalculateTarget_Click"/>
-                        </StackPanel>
+                                <!-- Calculate -->
+                                <Button Content="Calculate Required GPA" x:Name="CalculateTargetBtn" Style="{StaticResource PrimaryButton}"
+                                        HorizontalAlignment="Stretch" Click="CalculateTarget_Click"/>
+                            </StackPanel>
+                        </ScrollViewer>
                     </Border>
                     
                     <!-- Right: Results & Upgrade Path Analysis -->
-                    <Border Grid.Column="1" Background="#0d1117" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="25" VerticalAlignment="Top">
-                        <StackPanel>
-                            <TextBlock Text="Target Analytics Results" FontSize="18" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,15"/>
-                            
-                            <Border x:Name="TargetResultBorder" Background="#161b22" CornerRadius="10"
-                                    BorderBrush="#30363d" BorderThickness="1" Padding="20" Visibility="Collapsed">
-                                <StackPanel>
-                                    <TextBlock x:Name="TargetResultTitle" Text="" FontSize="20" FontWeight="Bold" Foreground="#f0f6fc"/>
-                                    <TextBlock x:Name="TargetResultText" Text="" FontSize="14" Foreground="#8b949e" Margin="0,8,0,0" TextWrapping="Wrap" LineHeight="20"/>
-                                    
-                                    <Border Height="1" Background="#30363d" Margin="0,20,0,20"/>
-                                    <TextBlock Text="📈 Graduation Class Upgrades" FontSize="16" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,12"/>
-                                    <TextBlock Text="Required semester GPA to reach each degree class:" FontSize="13" Foreground="#8b949e" Margin="0,0,0,12"/>
-                                    
-                                    <StackPanel x:Name="TargetUpgradePathsPanel"/>
-                                </StackPanel>
-                            </Border>
-                            
-                            <TextBlock x:Name="TargetPlaceholderText" Text="Enter your details and click Calculate to view upgrade paths."
-                                       Foreground="#8b949e" FontSize="13" HorizontalAlignment="Center" Margin="0,40,0,40" Visibility="Visible"/>
-                        </StackPanel>
+                    <Border Grid.Column="1" Background="#0d1117" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="25" VerticalAlignment="Stretch">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="Target Analytics Results" FontSize="18" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,15"/>
+                                
+                                <Border x:Name="TargetResultBorder" Background="#161b22" CornerRadius="10"
+                                        BorderBrush="#30363d" BorderThickness="1" Padding="20" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TargetResultTitle" Text="" FontSize="20" FontWeight="Bold" Foreground="#f0f6fc"/>
+                                        <TextBlock x:Name="TargetDifficultyText" Text="" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"/>
+                                        <TextBlock x:Name="TargetResultText" Text="" FontSize="14" Foreground="#8b949e" Margin="0,8,0,0" TextWrapping="Wrap" LineHeight="20"/>
+                                        
+                                        <Border Height="1" Background="#30363d" Margin="0,20,0,20"/>
+                                        <TextBlock Text="📈 Graduation Class Upgrades" FontSize="16" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,12"/>
+                                        <TextBlock Text="Required semester GPA to reach each degree class:" FontSize="13" Foreground="#8b949e" Margin="0,0,0,12"/>
+                                        
+                                        <StackPanel x:Name="TargetUpgradePathsPanel"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <TextBlock x:Name="TargetPlaceholderText" Text="Enter your details and click Calculate to view upgrade paths."
+                                           Foreground="#8b949e" FontSize="13" HorizontalAlignment="Center" Margin="0,40,0,40" Visibility="Visible"/>
+                            </StackPanel>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
             </Grid>
@@ -513,6 +545,124 @@
                                    HorizontalAlignment="Center" TextWrapping="Wrap" FontSize="13"/>
                     </StackPanel>
                 </Border>
+            </Grid>
+
+            <!-- ════ PAGE 6: ACADEMIC CALENDAR & REMINDERS ════ -->
+            <Grid x:Name="CalendarPage" Visibility="Collapsed" Margin="30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                    <TextBlock Text="📅 Academic Calendar &amp; Reminders" FontSize="26" FontWeight="Bold" Foreground="#f0f6fc"/>
+                    <TextBlock Text="Manage exams, assignments, quizzes and track deadline countdowns" FontSize="14" Foreground="#8b949e" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.1*"/>
+                        <ColumnDefinition Width="1.4*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Add Reminder / Form -->
+                    <Border Grid.Column="0" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="20" Margin="0,0,20,0" VerticalAlignment="Stretch">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="Add New Reminder" FontSize="18" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,15"/>
+
+                                <!-- Title -->
+                                <TextBlock Text="Title" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBox x:Name="RemTitle" Margin="0,0,0,12"/>
+
+                                <!-- Subject Name -->
+                                <TextBlock Text="Subject / Course" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBox x:Name="RemSubject" Margin="0,0,0,12"/>
+
+                                <!-- Type -->
+                                <TextBlock Text="Type" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <ComboBox x:Name="RemTypeCombo" Margin="0,0,0,12" SelectedIndex="0">
+                                    <ComboBoxItem Content="Exam"/>
+                                    <ComboBoxItem Content="Quiz"/>
+                                    <ComboBoxItem Content="Assignment"/>
+                                    <ComboBoxItem Content="Project"/>
+                                    <ComboBoxItem Content="Study Session"/>
+                                    <ComboBoxItem Content="Registration Deadline"/>
+                                </ComboBox>
+
+                                <!-- Date & Time -->
+                                <TextBlock Text="Date" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <DatePicker x:Name="RemDatePicker" Margin="0,0,0,12" Background="#21262d" Foreground="#f0f6fc"/>
+
+                                <TextBlock Text="Time (HH:mm, 24h format)" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBox x:Name="RemTimeText" Text="09:00" Margin="0,0,0,12"/>
+
+                                <!-- Priority -->
+                                <TextBlock Text="Priority" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <ComboBox x:Name="RemPriorityCombo" Margin="0,0,0,12" SelectedIndex="1">
+                                    <ComboBoxItem Content="Low"/>
+                                    <ComboBoxItem Content="Medium"/>
+                                    <ComboBoxItem Content="High"/>
+                                </ComboBox>
+
+                                <!-- Reminder Lead Time -->
+                                <TextBlock Text="Remind Me" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <ComboBox x:Name="RemLeadCombo" Margin="0,0,0,12" SelectedIndex="2">
+                                    <ComboBoxItem Content="1 Hour Before"/>
+                                    <ComboBoxItem Content="1 Day Before"/>
+                                    <ComboBoxItem Content="1 Week Before"/>
+                                    <ComboBoxItem Content="1 Month Before"/>
+                                </ComboBox>
+
+                                <!-- Notes -->
+                                <TextBlock Text="Notes" Foreground="#8b949e" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBox x:Name="RemNotes" Height="60" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,20"/>
+
+                                <Button Content="➕ Add Reminder" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Stretch" Click="AddReminder_Click"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- Right: Deadline Timeline and List -->
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Summary info widget -->
+                        <Border Grid.Row="0" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="15" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Today's Tasks" FontSize="12" Foreground="#8b949e"/>
+                                    <TextBlock x:Name="TodayTasksCount" Text="0 Tasks" FontSize="20" FontWeight="Bold" Foreground="#7c3aed" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="This Week's Deadlines" FontSize="12" Foreground="#8b949e"/>
+                                    <TextBlock x:Name="WeekTasksCount" Text="0 Deadlines" FontSize="20" FontWeight="Bold" Foreground="#3fb950" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- List of reminders -->
+                        <Border Grid.Row="1" Background="#161b22" CornerRadius="12" BorderBrush="#30363d" BorderThickness="1" Padding="20">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Reminders &amp; Deadlines" FontSize="18" FontWeight="Bold" Foreground="#f0f6fc" Margin="0,0,0,15"/>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel x:Name="RemindersPanel"/>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
             </Grid>
 
         </Grid>

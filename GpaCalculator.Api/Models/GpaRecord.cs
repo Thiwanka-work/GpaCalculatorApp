@@ -18,6 +18,8 @@ namespace GpaCalculator.Api.Models
 
         public double CGPA { get; set; }
 
+        public int Credits { get; set; }
+
         [ForeignKey("UserId")]
         public User? User { get; set; }
     }
